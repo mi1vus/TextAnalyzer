@@ -10,6 +10,7 @@ namespace TextAnalyzer
     {
         static void Main(string[] args)
         {
+            TextParser.ParseText("lerkin.txt", false);
         }
     }
 }
