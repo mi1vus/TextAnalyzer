@@ -4,13 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data.Entity;
 
 namespace TextAnalyzer
 {
-    //public class Word {
-    //    public int Count { get; set; }
-    //}
-
     public class TextParser
     {
         public static int TotalWordsCount { get; set; }
@@ -36,8 +33,23 @@ namespace TextAnalyzer
                             WordsFrequency[word] = ++WordsFrequency[word];
                     }
                 }
+            var context = new DBHelper.WordsContext();
+            var total = context.Words.Count();
+            foreach (var word in WordsFrequency)
+            {
+                if (word.Key.Length > 2 && word.Key.Length <= 15)
+                context.Words.Add(
+                    new DBHelper.Word {
+                        Text = word.Key,
+                        Count = word.Value
+                    }
+                    );
+            }
+            context.SaveChanges();
+
+            ///TODO удалить после тестирования
             Dictionary<string, int> SWordsFrequency = new Dictionary<string, int>();
-            foreach (var pair in WordsFrequency.OrderByDescending(t => t.Value))
+            foreach (var pair in WordsFrequency.OrderByDescending(t => t.Value).ThenByDescending(t => t.Value))
                 SWordsFrequency.Add(pair.Key, pair.Value);
         }
     }
