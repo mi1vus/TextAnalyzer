@@ -10,7 +10,37 @@ namespace TextAnalyzer
     {
         static void Main(string[] args)
         {
-            TextParser.ParseText("lerkin.txt", false);
+            bool error = true;
+            if (args.Count() > 0)
+            {
+                if (args.Count() == 2)
+                {
+                    switch (args[0])
+                    {
+                        case "add":
+                            TextParser.ParseText(args[1], false);
+                            error = false;
+                            break;
+                        case "append":
+                            TextParser.ParseText(args[1], true);
+                            error = false;
+                            break;
+                        //default:
+                        //    error = true;
+                        //    break;
+                    }
+                }
+                if (error)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Wrong parameters!");
+                    Console.ResetColor();
+                }
+            }
+            else
+            {
+
+            }
         }
     }
 }

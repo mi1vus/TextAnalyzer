@@ -24,7 +24,7 @@ namespace TextAnalyzer
                 while (!reader.EndOfStream)
                 {
                     var line = reader.ReadLine().ToLower().Split(
-                        new[] { " ", ",", ".","?","!","\'","(",")","\"","0","1","2","3","4","5","6","7","8","9"}
+                        new[] { " ", "-", ",", ".","?","!","\'","(",")","\"","0","1","2","3","4","5","6","7","8","9"}
                         ,StringSplitOptions.RemoveEmptyEntries);
 
                     foreach (var word in line)
