@@ -5,18 +5,32 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.Entity;
+using System.Diagnostics;
 
 namespace TextAnalyzer
 {
     public class TextParser
     {
+        private static ProjectSummer.Logger Logger = new ProjectSummer.Logger("TextParser");
         public static int TotalWordsCount { get; set; }
-        public static Dictionary<string, int> WordsFrequency = new Dictionary<string, int>();
         public static void ParseText(string path, bool append)
         {
             if (!File.Exists(path))
                 return;
-            
+
+            //таймер учета быстродействия
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            Dictionary<string, int> WordsToUpdate = new Dictionary<string, int>();
+            Dictionary<string, int> WordsToAdd = new Dictionary<string, int>();
+
+            var dbcontext = new DBHelper.WordsContext();
+            var totalWords = dbcontext.Words.Count();
+            if (totalWords > 0)
+            {
+                WordsToUpdate = dbcontext.Words.ToDictionary(k => k.Text, v => v.Count);
+            }
+
             using (var reader = new StreamReader(path))
                 while (!reader.EndOfStream)
                 {
@@ -27,30 +41,82 @@ namespace TextAnalyzer
                     foreach (var word in line)
                     {
                         ++TotalWordsCount;
-                        if (!WordsFrequency.ContainsKey(word))
-                            WordsFrequency.Add(word, 1);
+                        if (!WordsToUpdate.ContainsKey(word))
+                        {
+                            //TODO ошибка с добавлением новых слов! надо обновлять 
+                            WordsToAdd.Add(word, 1);
+                        }
                         else
-                            WordsFrequency[word] = ++WordsFrequency[word];
+                        {
+                            WordsToUpdate[word] = ++WordsToUpdate[word];
+                        }
                     }
                 }
-            var context = new DBHelper.WordsContext();
-            var total = context.Words.Count();
-            foreach (var word in WordsFrequency)
+
+            stopWatch.Stop();
+            TimeSpan ts = stopWatch.Elapsed;
+
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                ts.Hours, ts.Minutes, ts.Seconds,
+                ts.Milliseconds / 10);
+            Logger.Write($"чтение файла заняло: {elapsedTime}");
+
+            stopWatch.Reset();
+            stopWatch.Start();
+
+            foreach (var word in WordsToAdd)
             {
                 if (word.Key.Length > 2 && word.Key.Length <= 15)
-                context.Words.Add(
+                dbcontext.Words.Add(
                     new DBHelper.Word {
                         Text = word.Key,
                         Count = word.Value
                     }
                     );
             }
-            context.SaveChanges();
+
+            stopWatch.Stop();
+            ts = stopWatch.Elapsed;
+
+            elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                ts.Hours, ts.Minutes, ts.Seconds,
+                ts.Milliseconds / 10);
+            Logger.Write($"добавление новых слов в контекст заняло: {elapsedTime}");
+
+            stopWatch.Reset();
+            stopWatch.Start();
+
+            foreach (var word in WordsToUpdate)
+            {
+                dbcontext.Words.First(w => w.Text == word.Key).Count = word.Value;
+            }
+
+            stopWatch.Stop();
+            ts = stopWatch.Elapsed;
+
+            elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                ts.Hours, ts.Minutes, ts.Seconds,
+                ts.Milliseconds / 10);
+            Logger.Write($"обновление слов в контексте заняло: {elapsedTime}");
+
+            stopWatch.Reset();
+            stopWatch.Start();
+
+            dbcontext.SaveChanges();
+            stopWatch.Stop();
+            ts = stopWatch.Elapsed;
+
+            elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                ts.Hours, ts.Minutes, ts.Seconds,
+                ts.Milliseconds / 10);
+            Logger.Write($"сохранение контексте заняло: {elapsedTime}");
+
+            stopWatch.Reset();
+            stopWatch.Start();
+
 
             ///TODO удалить после тестирования
-            Dictionary<string, int> SWordsFrequency = new Dictionary<string, int>();
-            foreach (var pair in WordsFrequency.OrderByDescending(t => t.Value).ThenByDescending(t => t.Value))
-                SWordsFrequency.Add(pair.Key, pair.Value);
+            Dictionary<string, int> SWordsFrequency = dbcontext.Words.OrderByDescending(t => t.Count).ThenByDescending(t => t.Text).ToDictionary(k => k.Text, v => v.Count);
         }
     }
 }

@@ -17,7 +17,7 @@ namespace TextAnalyzer
             [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
             public int Id { get; set; }
             [Required, Column(TypeName = "varchar"), MinLength(3), MaxLength(15), 
-             Index(IsUnique = true), StringLength(15)]
+            Index(IsUnique = true)]
             public string Text { get; set; }
             [Required]
             public int Count { get; set; }
