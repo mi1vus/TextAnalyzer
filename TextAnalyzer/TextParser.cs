@@ -76,8 +76,12 @@ namespace TextAnalyzer
 
             foreach (var word in wordsToAdd)
             {
+                //TODO убрать
+                if (word.Key.Length < 3 || word.Key.Length > 15)
+                    continue;
+
                 dbcontext.Words.Add(
-                    new DBHelper.Word {
+                new DBHelper.Word {
                         Text = word.Key,
                         Count = word.Value
                     }
