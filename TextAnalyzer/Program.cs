@@ -72,6 +72,8 @@ namespace TextAnalyzer
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine(Environment.NewLine + string.Join(Environment.NewLine, words));
+                            //TODO Удалить
+                            Console.WriteLine(string.Join(Environment.NewLine, TextParser.GetNearWordsNoOrder(prefix)));
                             Console.ResetColor();
                         }
                         else

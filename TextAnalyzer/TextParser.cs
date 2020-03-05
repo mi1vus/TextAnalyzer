@@ -52,8 +52,8 @@ namespace TextAnalyzer
                 {
                     var line = reader.ReadLine().ToLower().Split(
                         new[] { " ", "-", ",", ".","\"",
-                            "?","!","\'","(",")","0","1",
-                            "2","3","4","5","6","7","8","9"}
+                            "?","!","\'","(",")","(",")","[","]",
+                            "0","1","2","3","4","5","6","7","8","9"}
                         ,StringSplitOptions.RemoveEmptyEntries);
 
                     foreach (var word in line)
@@ -117,9 +117,21 @@ namespace TextAnalyzer
         {
             Logger.StartTimer();
             var result = DbСontext.Words.Where(w => w.Text.StartsWith(prefix))
-                .OrderByDescending(w => w.Count).ThenBy(w => w.Text)
+                .OrderByDescending(w => w.Count)
+                //.ThenBy(w => w.Text)
                 .Take(5).Select(w => w.Text).ToList();
-            Logger.LogTimerAndRestart($"Запрос автодополнения к {prefix}. Найдено {result.Count} слов. Запрос занял:");
+            Logger.LogTimerAndRestart($"Запрос автодополнения к \"{prefix}\". Найдено {result.Count} слов. Запрос занял:");
+            Logger.ResetTimer();
+            return result;
+        }
+        //TODO удалить
+        public static List<String> GetNearWordsNoOrder(string prefix)
+        {
+            Logger.StartTimer();
+            var result = DbСontext.Words.Where(w => w.Text.StartsWith(prefix))
+                .Take(5).Select(w => w.Text).ToList();
+            Logger.LogTimerAndRestart($"Запрос без выравн автодополнения к \"{prefix}\". Найдено {result.Count} слов. Запрос занял:");
+            Logger.ResetTimer();
             return result;
         }
     }

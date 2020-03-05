@@ -14,12 +14,22 @@ namespace TextAnalyzer
     {
         public class Word
         {
-            [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-            public int Id { get; set; }
-            [Required, Column(TypeName = "NVarChar"), MinLength(3), MaxLength(15), 
-            Index(IsUnique = true)]
+            [DatabaseGenerated(DatabaseGeneratedOption.Identity),
+            //Key,
+            //Index("IX_IdUni", IsClustered = false, IsUnique = true)
+            ]
+            public int Num { get; set; }
+            [Required, Column(Order = 1, TypeName = "NVarChar"), MinLength(3), MaxLength(15),
+            Key(),
+            //Index("IX_CountTextClust", IsClustered = true, Order = 2),
+            //Index("IX_TextUni", IsClustered = false, IsUnique = true)
+            ]
             public string Text { get; set; }
-            [Required]
+            [Required,
+            //Key(),
+            //Column(Order = 1),
+            //Index("IX_CountTextClust", IsClustered = true, Order = 1)
+            ]
             public int Count { get; set; }
         }
 
