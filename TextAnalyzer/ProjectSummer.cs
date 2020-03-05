@@ -89,12 +89,12 @@ namespace TextAnalyzer
                 if (string.IsNullOrEmpty(message))
                     return false;
 
-                var lines = message.Split('\n');
+                var lines = message.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 string line = "";
 
                 for (int z = 0; z < lines.Length; z++)
                 {
-                    line += string.Format("{0:dd/MM/yy HH:mm:ss.fff}>{1}" + (z + 1 != lines.Length ? "\n" : ""), DateTime.Now, lines[z]);
+                    line += string.Format("{0:dd/MM/yy HH:mm:ss.fff}>{1}" + (z + 1 != lines.Length ? Environment.NewLine : ""), DateTime.Now, lines[z]);
                 }
 
                 try
@@ -134,6 +134,11 @@ namespace TextAnalyzer
             public void StartTimer()
             {
                 stopWatch.Start();
+            }
+            public void ResetTimer()
+            {
+                stopWatch.Stop();
+                stopWatch.Reset();
             }
             public void LogTimerAndRestart(string msg)
             {

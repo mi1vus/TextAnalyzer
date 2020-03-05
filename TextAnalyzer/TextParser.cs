@@ -12,8 +12,9 @@ namespace TextAnalyzer
     public class TextParser
     {
         private static ProjectSummer.Logger Logger = new ProjectSummer.Logger("TextParser");
+        public static DBHelper.WordsContext DbСontext = new DBHelper.WordsContext();
         //public static int TotalWordsCount { get; set; }
-        public static void ParseTextToDB(string path, bool append)
+        public static void ParseTextToDB(string path, bool update)
         {
             if (!File.Exists(path))
             {
@@ -21,8 +22,8 @@ namespace TextAnalyzer
                 return;
             }
 
-            Logger.Write($"Начало анализа {path}\r\n" +
-                $"обновление существующего словаря - {append}");
+            Logger.Write($"Начало анализа {path}{Environment.NewLine}" +
+                $"обновление существующего словаря - {update}");
 
             Dictionary<string, int> wordsToUpdate = new Dictionary<string, int>();
             Dictionary<string, int> wordsToAdd = new Dictionary<string, int>();
@@ -30,14 +31,21 @@ namespace TextAnalyzer
 
             Logger.StartTimer();
 
-            var dbcontext = new DBHelper.WordsContext();
-            var dbWordsCount = dbcontext.Words.Count();
-            if (dbWordsCount > 0)
+            if (update)
             {
-                wordsToUpdate = dbcontext.Words.ToDictionary(k => k.Text, v => v.Count);
+                var dbWordsCount = DbСontext.Words.Count();
+                if (dbWordsCount > 0)
+                {
+                    wordsToUpdate = DbСontext.Words.ToDictionary(k => k.Text, v => v.Count);
+                }
+            }
+            else
+            {
+                DbСontext.Words.RemoveRange(DbСontext.Words);
+                DbСontext.SaveChanges();
             }
 
-            Logger.LogTimerAndRestart($"Чтение слов из БД [{dbWordsCount} слов] заняло:");
+            Logger.LogTimerAndRestart($"Чтение слов из БД [{wordsToUpdate.Count} слов] заняло:");
 
             using (var reader = new StreamReader(path))
                 while (!reader.EndOfStream)
@@ -72,7 +80,7 @@ namespace TextAnalyzer
                     }
                 }
 
-            Logger.LogTimerAndRestart($"чтение файла [{fileWordsCount} слов] заняло:");
+            Logger.LogTimerAndRestart($"Чтение файла [{fileWordsCount} слов] заняло:");
 
             foreach (var word in wordsToAdd)
             {
@@ -80,7 +88,7 @@ namespace TextAnalyzer
                 if (word.Key.Length < 3 || word.Key.Length > 15)
                     continue;
 
-                dbcontext.Words.Add(
+                DbСontext.Words.Add(
                 new DBHelper.Word {
                         Text = word.Key,
                         Count = word.Value
@@ -88,21 +96,31 @@ namespace TextAnalyzer
                     );
             }
 
-            Logger.LogTimerAndRestart($"добавление новых слов в контекст заняло:");
+            Logger.LogTimerAndRestart($"Добавление новых слов в контекст заняло:");
 
             foreach (var word in wordsToUpdate)
             {
-                dbcontext.Words.First(w => w.Text == word.Key).Count = word.Value;
+                DbСontext.Words.First(w => w.Text == word.Key).Count = word.Value;
             }
 
-            Logger.LogTimerAndRestart($"обновление слов в контексте заняло:");
+            Logger.LogTimerAndRestart($"Обновление слов в контексте заняло:");
 
-            dbcontext.SaveChanges();
+            DbСontext.SaveChanges();
 
-            Logger.LogTimerAndRestart($"сохранение контексте заняло:");
-
+            Logger.LogTimerAndRestart($"Сохранение контексте заняло:");
+            Logger.ResetTimer();
             ///TODO удалить после тестирования
-            Dictionary<string, int> SWordsFrequency = dbcontext.Words.OrderByDescending(t => t.Count).ThenByDescending(t => t.Text).ToDictionary(k => k.Text, v => v.Count);
+            Dictionary<string, int> SWordsFrequency = DbСontext.Words.OrderByDescending(t => t.Count).ThenByDescending(t => t.Text).ToDictionary(k => k.Text, v => v.Count);
+        }
+
+        public static List<String> GetNearWords(string prefix)
+        {
+            Logger.StartTimer();
+            var result = DbСontext.Words.Where(w => w.Text.StartsWith(prefix))
+                .OrderByDescending(w => w.Count).ThenBy(w => w.Text)
+                .Take(5).Select(w => w.Text).ToList();
+            Logger.LogTimerAndRestart($"Запрос автодополнения к {prefix}. Найдено {result.Count} слов. Запрос занял:");
+            return result;
         }
     }
 }

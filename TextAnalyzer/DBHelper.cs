@@ -16,7 +16,7 @@ namespace TextAnalyzer
         {
             [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
             public int Id { get; set; }
-            [Required, Column(TypeName = "varchar"), MinLength(3), MaxLength(15), 
+            [Required, Column(TypeName = "NVarChar"), MinLength(3), MaxLength(15), 
             Index(IsUnique = true)]
             public string Text { get; set; }
             [Required]
@@ -25,10 +25,6 @@ namespace TextAnalyzer
 
         public class WordsContext : DbContext
         {
-            public WordsContext()
-            {
-            }
-
             public DbSet<Word> Words { get; set; }
 
             protected override void OnModelCreating(DbModelBuilder modelBuilder)
