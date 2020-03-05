@@ -14,24 +14,30 @@ namespace TextAnalyzer
         {
             //TODO удалить
             //Database.SetInitializer<WordsContext>(null);
-
+            Console.OutputEncoding = Encoding.UTF8;
             bool error = true;
             if (args.Count() > 0)
             {
                 if (args.Count() == 2)
                 {
+                    //TODO удалить
+                    //TextParser.ParseTextToDB(args[1], false);
+                    //TextParser.ParseTextToDB(args[1], false);
+                    //TextParser.ParseTextToDB(args[1], true);
+                    //TextParser.ParseTextToDB(args[1], true);
+
                     switch (args[0])
                     {
                         case "add":
                             TextParser.ParseTextToDB(args[1], false);
                             //TODO удалить
-                            TextParser.ParseTextToDB(args[1], false);
+                            //TextParser.ParseTextToDB(args[1], false);
                             error = false;
                             break;
                         case "update":
                             TextParser.ParseTextToDB(args[1], true);
                             //TODO удалить
-                            TextParser.ParseTextToDB(args[1], true);
+                            //TextParser.ParseTextToDB(args[1], true);
                             error = false;
                             break;
                         //default:
@@ -48,22 +54,28 @@ namespace TextAnalyzer
             }
             else
             {
-                //для кеширования запроса
-                TextParser.GetNearWords("a");
+                ////для кеширования запроса
+                //TextParser.GetNearWords("a");
                 ConsoleKeyInfo btn;
                 string prefix = "";
                 while (true)
                 {
                     prefix = "";
-                    do
+                    while (true)
                     {
-                        btn = Console.ReadKey();
-                        prefix += btn.KeyChar;
+                        btn = Console.ReadKey(false);
+                        if (btn.Key == ConsoleKey.Escape
+                            || btn.Key == ConsoleKey.Enter)
+                            break;
+                        else if (btn.Key == ConsoleKey.Backspace)
+                            continue;
+                        else
+                            prefix += btn.KeyChar;
                     }
-                    while (btn.Key != ConsoleKey.Escape
-                            && btn.Key != ConsoleKey.Enter);
+                    //while (btn.Key != ConsoleKey.Escape
+                    //        && btn.Key != ConsoleKey.Enter);
 
-                    prefix = prefix.Substring(0, prefix.Length - 1);
+                    //prefix = prefix.Substring(0, prefix.Length - 1);
 
                     if (btn.Key != ConsoleKey.Escape && !string.IsNullOrEmpty(prefix))
                     {
@@ -73,7 +85,7 @@ namespace TextAnalyzer
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine(Environment.NewLine + string.Join(Environment.NewLine, words));
                             //TODO Удалить
-                            Console.WriteLine(string.Join(Environment.NewLine, TextParser.GetNearWordsNoOrder(prefix)));
+                            //Console.WriteLine(string.Join(Environment.NewLine, TextParser.GetNearWordsNoOrder(prefix)));
                             Console.ResetColor();
                         }
                         else

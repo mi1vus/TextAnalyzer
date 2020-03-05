@@ -18,7 +18,7 @@ namespace TextAnalyzer
             //Key,
             //Index("IX_IdUni", IsClustered = false, IsUnique = true)
             ]
-            public int Num { get; set; }
+            public int Id { get; set; }
             [Required, Column(Order = 1, TypeName = "NVarChar"), MinLength(3), MaxLength(15),
             Key(),
             //Index("IX_CountTextClust", IsClustered = true, Order = 2),

@@ -61,9 +61,10 @@ namespace TextAnalyzer
 //TODO убрать
 #if DEBUG
 #else
+#endif
                         if (word.Length < 3 || word.Length > 15)
                             continue;
-#endif
+
                         ++fileWordsCount;
                         if (!wordsToUpdate.ContainsKey(word))
                         {
@@ -82,19 +83,24 @@ namespace TextAnalyzer
 
             Logger.LogTimerAndRestart($"Чтение файла [{fileWordsCount} слов] заняло:");
 
-            foreach (var word in wordsToAdd)
+            DbСontext.Words.AddRange(wordsToAdd.Select(w=> new DBHelper.Word
             {
-                //TODO убрать
-                if (word.Key.Length < 3 || word.Key.Length > 15)
-                    continue;
+                Text = w.Key,
+                Count = w.Value
+            }));
+            //foreach (var word in wordsToAdd)
+            //{
+            //    //TODO убрать
+            //    if (word.Key.Length < 3 || word.Key.Length > 15)
+            //        continue;
 
-                DbСontext.Words.Add(
-                new DBHelper.Word {
-                        Text = word.Key,
-                        Count = word.Value
-                    }
-                    );
-            }
+            //    DbСontext.Words.AddRange(
+            //    new DBHelper.Word {
+            //            Text = word.Key,
+            //            Count = word.Value
+            //        }
+            //        );
+            //}
 
             Logger.LogTimerAndRestart($"Добавление новых слов в контекст заняло:");
 
@@ -118,21 +124,21 @@ namespace TextAnalyzer
             Logger.StartTimer();
             var result = DbСontext.Words.Where(w => w.Text.StartsWith(prefix))
                 .OrderByDescending(w => w.Count)
-                //.ThenBy(w => w.Text)
+                .ThenBy(w => w.Text)
                 .Take(5).Select(w => w.Text).ToList();
             Logger.LogTimerAndRestart($"Запрос автодополнения к \"{prefix}\". Найдено {result.Count} слов. Запрос занял:");
             Logger.ResetTimer();
             return result;
         }
         //TODO удалить
-        public static List<String> GetNearWordsNoOrder(string prefix)
-        {
-            Logger.StartTimer();
-            var result = DbСontext.Words.Where(w => w.Text.StartsWith(prefix))
-                .Take(5).Select(w => w.Text).ToList();
-            Logger.LogTimerAndRestart($"Запрос без выравн автодополнения к \"{prefix}\". Найдено {result.Count} слов. Запрос занял:");
-            Logger.ResetTimer();
-            return result;
-        }
+        //public static List<String> GetNearWordsNoOrder(string prefix)
+        //{
+        //    Logger.StartTimer();
+        //    var result = DbСontext.Words.Where(w => w.Text.StartsWith(prefix))
+        //        .Take(5).Select(w => w.Text).ToList();
+        //    Logger.LogTimerAndRestart($"Запрос без выравн автодополнения к \"{prefix}\". Найдено {result.Count} слов. Запрос занял:");
+        //    Logger.ResetTimer();
+        //    return result;
+        //}
     }
 }
