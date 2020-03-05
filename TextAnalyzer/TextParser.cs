@@ -12,61 +12,70 @@ namespace TextAnalyzer
     public class TextParser
     {
         private static ProjectSummer.Logger Logger = new ProjectSummer.Logger("TextParser");
-        public static int TotalWordsCount { get; set; }
-        public static void ParseText(string path, bool append)
+        //public static int TotalWordsCount { get; set; }
+        public static void ParseTextToDB(string path, bool append)
         {
             if (!File.Exists(path))
+            {
+                Logger.Write($"Отсутствует файл для анализа {path}");
                 return;
+            }
 
-            //таймер учета быстродействия
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            Dictionary<string, int> WordsToUpdate = new Dictionary<string, int>();
-            Dictionary<string, int> WordsToAdd = new Dictionary<string, int>();
+            Logger.Write($"Начало анализа {path}\r\n" +
+                $"обновление существующего словаря - {append}");
+
+            Dictionary<string, int> wordsToUpdate = new Dictionary<string, int>();
+            Dictionary<string, int> wordsToAdd = new Dictionary<string, int>();
+            var fileWordsCount = 0;
+
+            Logger.StartTimer();
 
             var dbcontext = new DBHelper.WordsContext();
-            var totalWords = dbcontext.Words.Count();
-            if (totalWords > 0)
+            var dbWordsCount = dbcontext.Words.Count();
+            if (dbWordsCount > 0)
             {
-                WordsToUpdate = dbcontext.Words.ToDictionary(k => k.Text, v => v.Count);
+                wordsToUpdate = dbcontext.Words.ToDictionary(k => k.Text, v => v.Count);
             }
+
+            Logger.LogTimerAndRestart($"Чтение слов из БД [{dbWordsCount} слов] заняло:");
 
             using (var reader = new StreamReader(path))
                 while (!reader.EndOfStream)
                 {
                     var line = reader.ReadLine().ToLower().Split(
-                        new[] { " ", "-", ",", ".","?","!","\'","(",")","\"","0","1","2","3","4","5","6","7","8","9"}
+                        new[] { " ", "-", ",", ".","\"",
+                            "?","!","\'","(",")","0","1",
+                            "2","3","4","5","6","7","8","9"}
                         ,StringSplitOptions.RemoveEmptyEntries);
 
                     foreach (var word in line)
                     {
-                        ++TotalWordsCount;
-                        if (!WordsToUpdate.ContainsKey(word))
+//TODO убрать
+#if DEBUG
+#else
+                        if (word.Length < 3 || word.Length > 15)
+                            continue;
+#endif
+                        ++fileWordsCount;
+                        if (!wordsToUpdate.ContainsKey(word))
                         {
                             //TODO ошибка с добавлением новых слов! надо обновлять 
-                            WordsToAdd.Add(word, 1);
+                            if (!wordsToAdd.ContainsKey(word))
+                                wordsToAdd.Add(word, 1);
+                            else
+                                ++wordsToAdd[word];
                         }
                         else
                         {
-                            WordsToUpdate[word] = ++WordsToUpdate[word];
+                            ++wordsToUpdate[word];
                         }
                     }
                 }
 
-            stopWatch.Stop();
-            TimeSpan ts = stopWatch.Elapsed;
+            Logger.LogTimerAndRestart($"чтение файла [{fileWordsCount} слов] заняло:");
 
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds / 10);
-            Logger.Write($"чтение файла заняло: {elapsedTime}");
-
-            stopWatch.Reset();
-            stopWatch.Start();
-
-            foreach (var word in WordsToAdd)
+            foreach (var word in wordsToAdd)
             {
-                if (word.Key.Length > 2 && word.Key.Length <= 15)
                 dbcontext.Words.Add(
                     new DBHelper.Word {
                         Text = word.Key,
@@ -75,45 +84,18 @@ namespace TextAnalyzer
                     );
             }
 
-            stopWatch.Stop();
-            ts = stopWatch.Elapsed;
+            Logger.LogTimerAndRestart($"добавление новых слов в контекст заняло:");
 
-            elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds / 10);
-            Logger.Write($"добавление новых слов в контекст заняло: {elapsedTime}");
-
-            stopWatch.Reset();
-            stopWatch.Start();
-
-            foreach (var word in WordsToUpdate)
+            foreach (var word in wordsToUpdate)
             {
                 dbcontext.Words.First(w => w.Text == word.Key).Count = word.Value;
             }
 
-            stopWatch.Stop();
-            ts = stopWatch.Elapsed;
-
-            elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds / 10);
-            Logger.Write($"обновление слов в контексте заняло: {elapsedTime}");
-
-            stopWatch.Reset();
-            stopWatch.Start();
+            Logger.LogTimerAndRestart($"обновление слов в контексте заняло:");
 
             dbcontext.SaveChanges();
-            stopWatch.Stop();
-            ts = stopWatch.Elapsed;
 
-            elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds / 10);
-            Logger.Write($"сохранение контексте заняло: {elapsedTime}");
-
-            stopWatch.Reset();
-            stopWatch.Start();
-
+            Logger.LogTimerAndRestart($"сохранение контексте заняло:");
 
             ///TODO удалить после тестирования
             Dictionary<string, int> SWordsFrequency = dbcontext.Words.OrderByDescending(t => t.Count).ThenByDescending(t => t.Text).ToDictionary(k => k.Text, v => v.Count);

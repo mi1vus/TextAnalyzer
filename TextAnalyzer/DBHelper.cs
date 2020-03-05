@@ -25,6 +25,10 @@ namespace TextAnalyzer
 
         public class WordsContext : DbContext
         {
+            public WordsContext()
+            {
+            }
+
             public DbSet<Word> Words { get; set; }
 
             protected override void OnModelCreating(DbModelBuilder modelBuilder)

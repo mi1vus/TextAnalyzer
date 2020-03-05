@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
+using System.Diagnostics;
 
 namespace TextAnalyzer
 {
@@ -23,7 +24,6 @@ namespace TextAnalyzer
             private static string _logDir = AppDomain.CurrentDomain.BaseDirectory;
             private string path_mem = "";
             private DateTime date_mem = DateTime.MinValue;
-
             private string path() => path(DateTime.Today);
             private string path(DateTime DateAddon)
             {
@@ -35,6 +35,7 @@ namespace TextAnalyzer
                 return path_mem;
 
             }
+            private string fileName = "";
 
             #endregion
 
@@ -54,41 +55,6 @@ namespace TextAnalyzer
                 }
             }
 
-            /// <summary>
-            /// Дата/время последней отчистки архива
-            /// </summary>
-            public DateTime LastArchiveClear
-            {
-                get;
-                private set;
-            }
-
-            /// <summary>
-            /// Текущий уровень логирования
-            /// </summary>
-            public int LogLevel
-            {
-                get;
-                set;
-            }
-
-            /// <summary>
-            /// Включение/отключение записи логов на диск
-            /// </summary>
-            public bool LogEnable
-            {
-                get;
-                set;
-            }
-
-            /// <summary>
-            /// Глубина архива логов (дней)
-            /// </summary>
-            public int ArchiveDepth
-            {
-                get;
-                set;
-            }
 
             /// <summary>
             /// Имя экземпляра логера
@@ -113,7 +79,11 @@ namespace TextAnalyzer
             {
                 return Write(string.Format(format, args));
             }
-
+            /// <summary>
+            /// Запись в лог сообщения с отметкой времени
+            /// </summary>
+            /// <param name="message"></param>
+            /// <returns></returns>
             public bool Write(string message)
             {
                 if (string.IsNullOrEmpty(message))
@@ -121,8 +91,38 @@ namespace TextAnalyzer
 
                 var lines = message.Split('\n');
                 string line = "";
+
                 for (int z = 0; z < lines.Length; z++)
-                    line += string.Format("{0:dd/MM/yy HH:mm:ss.fff}>{2}" + (z + 1 != lines.Length ? "\n" : ""), DateTime.Now, lines[z]);
+                {
+                    line += string.Format("{0:dd/MM/yy HH:mm:ss.fff}>{1}" + (z + 1 != lines.Length ? "\n" : ""), DateTime.Now, lines[z]);
+                }
+
+                try
+                {
+                    if (!System.IO.Directory.Exists(path()))
+                        System.IO.Directory.CreateDirectory(path());
+                    var today = DateTime.Today;
+                    if (fileName != GetFileName(DateTime.Today))
+                        fileName = GetFileName(DateTime.Today);
+                    lock (fileName)
+                    {
+                        //string fileName = GetFileName(DateTime.Today);
+
+                        using (FileStream fileSteam = new FileStream(fileName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete | FileShare.Read | FileShare.Write))
+                        {
+                            using (System.IO.StreamWriter str = new StreamWriter(fileSteam, Encoding.UTF8))
+                            {
+                                str.WriteLine(line);
+                                str.Flush();
+                            }
+                            fileSteam.Close();
+                        }
+                    }
+                }
+                catch
+                {
+
+                }
 
                 return true;
             }
@@ -130,6 +130,32 @@ namespace TextAnalyzer
             #endregion
 
             #region Вспомогательные методы
+
+            public void StartTimer()
+            {
+                stopWatch.Start();
+            }
+            public void LogTimerAndRestart(string msg)
+            {
+                stopWatch.Stop();
+                TimeSpan ts = stopWatch.Elapsed;
+
+                string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours, ts.Minutes, ts.Seconds,
+                    ts.Milliseconds / 10);
+                Write($"{msg} {elapsedTime}");
+
+                stopWatch.Reset();
+                stopWatch.Start();
+            }
+            private Stopwatch stopWatch = new Stopwatch();
+
+            //public string GetDirName(DateTime dateAddon)
+            //{
+            //    if (!Directory.Exists(path(dateAddon)))
+            //        Directory.CreateDirectory(path(dateAddon));
+            //    return path(dateAddon);
+            //}
             private string get_file_name = "";
             private DateTime get_filename_date = DateTime.MinValue;
             private string GetFileName(DateTime dateAddon)
@@ -143,38 +169,32 @@ namespace TextAnalyzer
                 }
                 return get_file_name;
             }
-            public string GetDirName(DateTime dateAddon)
-            {
-                if (!Directory.Exists(path(dateAddon)))
-                    Directory.CreateDirectory(path(dateAddon));
-                return path(dateAddon);
-            }
-            private string readDay(DateTime dTime)
-            {
-                string strret = "";
-                try
-                {
-                    if (!System.IO.Directory.Exists(path(dTime)))
-                        System.IO.Directory.CreateDirectory(path(dTime));
-                    string fileName = GetFileName(dTime);
-                    if (!File.Exists(fileName))
-                        return "";
-                    using (FileStream fileSteam = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-                    {
-                        using (System.IO.StreamReader str = new StreamReader(fileSteam, Encoding.Unicode))
-                        {
-                            strret = str.ReadToEnd();
-                            fileSteam.Close();
-                        }
-                    }
-                    return strret;
-                }
-                catch
-                {
-                    return strret;
-                }
+            //private string readDay(DateTime dTime)
+            //{
+            //    string strret = "";
+            //    try
+            //    {
+            //        if (!System.IO.Directory.Exists(path(dTime)))
+            //            System.IO.Directory.CreateDirectory(path(dTime));
+            //        string fileName = GetFileName(dTime);
+            //        if (!File.Exists(fileName))
+            //            return "";
+            //        using (FileStream fileSteam = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            //        {
+            //            using (System.IO.StreamReader str = new StreamReader(fileSteam, Encoding.Unicode))
+            //            {
+            //                strret = str.ReadToEnd();
+            //                fileSteam.Close();
+            //            }
+            //        }
+            //        return strret;
+            //    }
+            //    catch
+            //    {
+            //        return strret;
+            //    }
 
-            }
+            //}
             #endregion
         }
     }
