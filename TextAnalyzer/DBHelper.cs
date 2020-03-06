@@ -31,10 +31,18 @@ namespace TextAnalyzer
             //Index("IX_CountTextClust", IsClustered = true, Order = 1)
             ]
             public int Count { get; set; }
+
+            [NotMapped]
+            public bool Changed { get; set; } = false;
         }
 
         public class WordsContext : DbContext
         {
+            public WordsContext(string connString) 
+                : base(connString)
+            {
+            }
+
             public DbSet<Word> Words { get; set; }
 
             protected override void OnModelCreating(DbModelBuilder modelBuilder)

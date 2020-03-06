@@ -28,13 +28,19 @@ namespace TextAnalyzer
 
                     switch (args[0])
                     {
-                        case "add":
+                        case "-add":
                             TextParser.ParseTextToDB(args[1], false);
                             //TODO удалить
                             //TextParser.ParseTextToDB(args[1], false);
                             error = false;
                             break;
-                        case "update":
+                        case "-update":
+                            TextParser.ParseTextToDB(args[1], true);
+                            //TODO удалить
+                            //TextParser.ParseTextToDB(args[1], true);
+                            error = false;
+                            break;
+                        case "-clear":
                             TextParser.ParseTextToDB(args[1], true);
                             //TODO удалить
                             //TextParser.ParseTextToDB(args[1], true);
@@ -54,8 +60,13 @@ namespace TextAnalyzer
             }
             else
             {
-                ////для кеширования запроса
-                //TextParser.GetNearWords("a");
+                //TODO Удалить
+                //while(true)
+                //    Console.Read();
+                int i = 0;
+
+                //для кеширования запроса
+                TextParser.GetNearWords("a", false);
                 ConsoleKeyInfo btn;
                 string prefix = "";
                 while (true)
@@ -63,21 +74,37 @@ namespace TextAnalyzer
                     prefix = "";
                     while (true)
                     {
+                        var r = Console.ReadLine();
                         btn = Console.ReadKey(false);
-                        if (btn.Key == ConsoleKey.Escape
-                            || btn.Key == ConsoleKey.Enter)
+                        //i = Console.Read();
+                        //if (btn.Key == ConsoleKey.Escape
+                        //    || btn.Key == ConsoleKey.Enter)
+                        //    break;
+                        //else if (btn.Key == ConsoleKey.Backspace)
+                        //{
+                        //    if (prefix.Length > 0)
+                        //        prefix = prefix.Substring(0, prefix.Length - 1);
+                        //    continue;
+                        //}
+                        //else
+                        //    prefix += btn.KeyChar;
+                        //if (btn.Key != ConsoleKey.Escape && !string.IsNullOrEmpty(prefix))
+                        //{
+
+                        if (i == (int)ConsoleKey.Escape
+                            || i == (int)ConsoleKey.Enter)
                             break;
-                        else if (btn.Key == ConsoleKey.Backspace)
+                        else if (i == (int)ConsoleKey.Backspace)
+                        {
+                            if (prefix.Length > 0)
+                                prefix = prefix.Substring(0, prefix.Length - 1);
                             continue;
+                        }
                         else
-                            prefix += btn.KeyChar;
+                            prefix += (char)i;
                     }
-                    //while (btn.Key != ConsoleKey.Escape
-                    //        && btn.Key != ConsoleKey.Enter);
 
-                    //prefix = prefix.Substring(0, prefix.Length - 1);
-
-                    if (btn.Key != ConsoleKey.Escape && !string.IsNullOrEmpty(prefix))
+                    if (i != (int)ConsoleKey.Escape && !string.IsNullOrEmpty(prefix))
                     {
                         var words = TextParser.GetNearWords(prefix);
                         if (words.Count > 0)
