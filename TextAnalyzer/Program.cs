@@ -74,8 +74,8 @@ namespace TextAnalyzer
                     prefix = "";
                     while (true)
                     {
-                        var r = Console.ReadLine();
-                        btn = Console.ReadKey(false);
+                        var r = readLineWithCancel();
+                        //btn = Console.ReadKey(false);
                         //i = Console.Read();
                         //if (btn.Key == ConsoleKey.Escape
                         //    || btn.Key == ConsoleKey.Enter)
@@ -122,6 +122,83 @@ namespace TextAnalyzer
                         break;
                 }
             }
+        }
+
+        //Returns null if ESC key pressed during input.
+        private static string readLineWithCancel()
+        {
+            string result = null;
+
+            StringBuilder buffer = new StringBuilder();
+
+            //The key is read passing true for the intercept argument to prevent
+            //any characters from displaying when the Escape key is pressed.
+            ConsoleKeyInfo info = Console.ReadKey(true);
+            while (info.Key != ConsoleKey.Enter && info.Key != ConsoleKey.Escape)
+            {
+                Console.Write(info.KeyChar);
+                buffer.Append(info.KeyChar);
+                info = Console.ReadKey(true);
+            }
+
+            if (info.Key == ConsoleKey.Enter)
+            {
+                result = buffer.ToString();
+            }
+
+            return result;
+        }
+
+        public static bool CancelableReadLine(out string value)
+        {
+            value = string.Empty;
+            var buffer = new StringBuilder();
+            var key = Console.ReadKey(true);
+            while (key.Key != ConsoleKey.Enter && key.Key != ConsoleKey.Escape)
+            {
+                if (key.Key == ConsoleKey.Backspace && Console.CursorLeft > 0)
+                {
+                    var cli = --Console.CursorLeft;
+                    buffer.Remove(cli, 1);
+                    Console.CursorLeft = 0;
+                    Console.Write(new String(Enumerable.Range(0, buffer.Length + 1).Select(o => ' ').ToArray()));
+                    Console.CursorLeft = 0;
+                    Console.Write(buffer.ToString());
+                    Console.CursorLeft = cli;
+                    key = Console.ReadKey(true);
+                }
+                else if (Char.IsLetterOrDigit(key.KeyChar) || Char.IsWhiteSpace(key.KeyChar))
+                {
+                    var cli = Console.CursorLeft;
+                    buffer.Insert(cli, key.KeyChar);
+                    Console.CursorLeft = 0;
+                    Console.Write(buffer.ToString());
+                    Console.CursorLeft = cli + 1;
+                    key = Console.ReadKey(true);
+                }
+                else if (key.Key == ConsoleKey.LeftArrow && Console.CursorLeft > 0)
+                {
+                    Console.CursorLeft--;
+                    key = Console.ReadKey(true);
+                }
+                else if (key.Key == ConsoleKey.RightArrow && Console.CursorLeft < buffer.Length)
+                {
+                    Console.CursorLeft++;
+                    key = Console.ReadKey(true);
+                }
+                else
+                {
+                    key = Console.ReadKey(true);
+                }
+            }
+
+            if (key.Key == ConsoleKey.Enter)
+            {
+                Console.WriteLine();
+                value = buffer.ToString();
+                return true;
+            }
+            return false;
         }
     }
 }
