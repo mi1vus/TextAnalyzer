@@ -9,7 +9,26 @@ namespace TextAnalyzer
     public class TextParser
     {
         private static ProjectSummer.Logger Logger = new ProjectSummer.Logger("TextParser");
-        private static DBHelper.WordsContext DbСontext = new DBHelper.WordsContext(/*"Data Source=.\\SQLEXP; Initial Catalog=TextAnalyzer; Integrated Security=true; MultipleActiveResultSets=true;"*/);
+        private static DBHelper.WordsContext DbСontext;
+
+        /// <summary>
+        /// Инициализация
+        /// </summary>
+        /// <param name="connectionString">Строка подключения к безе данных</param>
+        /// <returns>False - если возникла ошибка</returns>
+        public static bool Initialize(string connectionString)
+        {
+            try
+            {
+                DbСontext = new DBHelper.WordsContext(connectionString/*"Data Source=.\\SQLEXP; Initial Catalog=TextAnalyzer; Integrated Security=true; MultipleActiveResultSets=true;"*/);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.Write($"Ошибка в Initialyze: {ex.ToString()}");
+                return false;
+            }
+}
 
         /// <summary>
         /// Анализ текста и добавление слов в базу данных
@@ -22,6 +41,11 @@ namespace TextAnalyzer
             if (!File.Exists(path))
             {
                 Logger.Write($"Отсутствует файл для анализа {path}");
+                return false;
+            }
+            if (DbСontext == null)
+            {
+                Logger.Write("TextParser не инициализирован!");
                 return false;
             }
             try
@@ -144,6 +168,11 @@ namespace TextAnalyzer
         public static List<String> GetNearWords(string prefix, bool logTime = true, int top = 5)
         {
             List<String> result = new List<string>();
+            if (DbСontext == null)
+            {
+                Logger.Write("TextParser не инициализирован!");
+                return result;
+            }
             try
             {
                 Logger.StartTimer();
@@ -168,6 +197,11 @@ namespace TextAnalyzer
         /// <returns>False - если возникла ошибка</returns>
         public static bool ClearDB()
         {
+            if (DbСontext == null)
+            {
+                Logger.Write("TextParser не инициализирован!");
+                return false;
+            }
             try
             {
                 DbСontext.Words.RemoveRange(DbСontext.Words);
@@ -180,6 +214,5 @@ namespace TextAnalyzer
                 return false;
             }
         }
-
     }
 }

@@ -10,8 +10,18 @@ using System.Diagnostics;
 
 namespace TextAnalyzer
 {
-    class ProjectSummer
+    public class ProjectSummer
     {
+        private static Logger Logger_ = new Logger("ProjectSummer");
+
+        //public class ServerCommandArguments
+        //{
+        //    public bool Add { get; set; }
+        //    public bool Update { get; set; }
+        //    public bool Clear { get; set; }
+        //    public string FilePath { get; set; }
+        //}
+
         public class Logger
         {
             public Logger(string name)
@@ -195,6 +205,83 @@ namespace TextAnalyzer
                 return get_file_name;
             }
             #endregion
+        }
+
+        /// <summary>
+        /// Прочитать следующую строку из консоли, выход по esc
+        /// </summary>
+        /// <param name="line">В эту переменную помещается прочтенная строка</param>
+        /// <returns></returns>
+        public static bool ReadLineEsc(out string line)
+        {
+            line = string.Empty;
+            try
+            {
+                var buffer = new StringBuilder();
+                var key = Console.ReadKey(true);
+                while (key.Key != ConsoleKey.Enter && key.Key != ConsoleKey.Escape)
+                {
+                    if (key.Key == ConsoleKey.Backspace && Console.CursorLeft > 0)
+                    {
+                        var cli = --Console.CursorLeft;
+                        buffer.Remove(cli, 1);
+                        Console.CursorLeft = 0;
+                        Console.Write(new String(Enumerable.Range(0, buffer.Length + 1).Select(o => ' ').ToArray()));
+                        Console.CursorLeft = 0;
+                        Console.Write(buffer.ToString());
+                        Console.CursorLeft = cli;
+                        key = Console.ReadKey(true);
+                    }
+                    else if (key.Key == ConsoleKey.Delete && Console.CursorLeft < buffer.Length)
+                    {
+                        var cli = Console.CursorLeft;
+                        buffer.Remove(cli, 1);
+                        Console.CursorLeft = 0;
+                        Console.Write(new String(Enumerable.Range(0, buffer.Length + 1).Select(o => ' ').ToArray()));
+                        Console.CursorLeft = 0;
+                        Console.Write(buffer.ToString());
+                        Console.CursorLeft = cli;
+                        key = Console.ReadKey(true);
+                    }
+                    else if (Char.IsLetterOrDigit(key.KeyChar) || Char.IsWhiteSpace(key.KeyChar))
+                    {
+                        var cli = Console.CursorLeft;
+                        buffer.Insert(cli, key.KeyChar);
+                        Console.CursorLeft = 0;
+                        Console.Write(buffer.ToString());
+                        Console.CursorLeft = cli + 1;
+                        key = Console.ReadKey(true);
+                    }
+                    else if (key.Key == ConsoleKey.LeftArrow && Console.CursorLeft > 0)
+                    {
+                        Console.CursorLeft--;
+                        key = Console.ReadKey(true);
+                    }
+                    else if (key.Key == ConsoleKey.RightArrow && Console.CursorLeft < buffer.Length)
+                    {
+                        Console.CursorLeft++;
+                        key = Console.ReadKey(true);
+                    }
+                    else
+                    {
+                        key = Console.ReadKey(true);
+                    }
+                }
+
+                if (key.Key == ConsoleKey.Enter)
+                {
+                    Console.WriteLine();
+                    line = buffer.ToString();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger_.Write($"Ошибка в ReadLineEsc: {ex.ToString()}");
+                return false;
+            }
+
+            return false;
         }
     }
 

@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.28307.645
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextAnalyzer", "TextAnalyzer\TextAnalyzer.csproj", "{4E7FC9FF-D1AB-4594-9648-9923E10AC0A4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextAnalyzerWebClient", "TextAnalyzerWebClient\TextAnalyzerWebClient.csproj", "{C3CECDDE-45FE-460A-B1E1-93EACF461CD3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextAnalyzerWebServer", "TextAnalyzerWebServer\TextAnalyzerWebServer.csproj", "{C4E2CB57-8BB1-492D-9FAA-094FE7A7E20F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,22 @@ Global
 		{4E7FC9FF-D1AB-4594-9648-9923E10AC0A4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4E7FC9FF-D1AB-4594-9648-9923E10AC0A4}.Release|x86.ActiveCfg = Release|x86
 		{4E7FC9FF-D1AB-4594-9648-9923E10AC0A4}.Release|x86.Build.0 = Release|x86
+		{C3CECDDE-45FE-460A-B1E1-93EACF461CD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3CECDDE-45FE-460A-B1E1-93EACF461CD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3CECDDE-45FE-460A-B1E1-93EACF461CD3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C3CECDDE-45FE-460A-B1E1-93EACF461CD3}.Debug|x86.Build.0 = Debug|Any CPU
+		{C3CECDDE-45FE-460A-B1E1-93EACF461CD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3CECDDE-45FE-460A-B1E1-93EACF461CD3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3CECDDE-45FE-460A-B1E1-93EACF461CD3}.Release|x86.ActiveCfg = Release|Any CPU
+		{C3CECDDE-45FE-460A-B1E1-93EACF461CD3}.Release|x86.Build.0 = Release|Any CPU
+		{C4E2CB57-8BB1-492D-9FAA-094FE7A7E20F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4E2CB57-8BB1-492D-9FAA-094FE7A7E20F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4E2CB57-8BB1-492D-9FAA-094FE7A7E20F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C4E2CB57-8BB1-492D-9FAA-094FE7A7E20F}.Debug|x86.Build.0 = Debug|Any CPU
+		{C4E2CB57-8BB1-492D-9FAA-094FE7A7E20F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4E2CB57-8BB1-492D-9FAA-094FE7A7E20F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4E2CB57-8BB1-492D-9FAA-094FE7A7E20F}.Release|x86.ActiveCfg = Release|Any CPU
+		{C4E2CB57-8BB1-492D-9FAA-094FE7A7E20F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
