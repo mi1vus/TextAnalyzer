@@ -10,7 +10,7 @@ namespace TextAnalyzerWebClient
 {
     class Program
     {
-        const int port = 8888;
+        const int port = 1234;
         const string address = "localhost";
         const string address2 = "127.0.0.1";
         static void Main(string[] args)

@@ -203,7 +203,7 @@ namespace TextAnalyzerWebServer
                         sendBytes = Encoding.UTF8.GetBytes(serverResponse);
                         stream.Write(sendBytes, 0, sendBytes.Length);
                         stream.Flush();
-                        Logger.Write($"Ответ сервера клиенту[{Id}]:{serverResponse}");
+                        Logger.Write($"Ответ сервера клиенту[{Id}]:\r\n{serverResponse}");
                     }
                     catch (Exception ex)
                     {
