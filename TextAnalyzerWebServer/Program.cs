@@ -190,6 +190,7 @@ namespace TextAnalyzerWebServer
 
                         //dataFromClient = System.Text.Encoding.UTF8.GetString(bytesFrom);
                         //dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf($"${(char)0}"));
+                        //TODO прекратить при обрыве клиента
                         Logger.Write($"Запрос клиента[{Id}]:{dataFromClient}");
 
                         var commands = dataFromClient.Split(new[] { '\r', '\n', ' ', '\'', '"' }, StringSplitOptions.RemoveEmptyEntries);
