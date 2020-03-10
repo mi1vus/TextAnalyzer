@@ -115,6 +115,7 @@ namespace TextAnalyzerWebServer
                 {
                     serverSocket.Start();
                     Logger.Write("Начат прием соединений");
+                    Console.WriteLine("Старт сервера");
 
                     while (true)
                     {
@@ -134,6 +135,7 @@ namespace TextAnalyzerWebServer
                     clientSocket.Close();
                     serverSocket.Stop();
                     Logger.Write("Остановка сервера");
+                    Console.WriteLine("Остановка сервера");
                     //Console.ReadLine();
                 }
             }
