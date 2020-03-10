@@ -27,11 +27,11 @@ namespace TextAnalyzerWebClient
                 {
                     //Console.Write(userName + ": ");
                     //// ввод сообщения
-                    //string message = Console.ReadLine();
+                    string message = Console.ReadLine();
                     //message = String.Format("{0}: {1}$\0", userName, message);
-                    var message = $"Макс: Привет неудачники!${(char)0}";
+                    //var message = $"Макс: Привет неудачники!${(char)0}";
                     // преобразуем сообщение в массив байтов
-                    byte[] data = Encoding.UTF8.GetBytes(message);
+                    byte[] data = Encoding.UTF8.GetBytes($"get {message}");
                     // отправка сообщения
                     stream.Write(data, 0, data.Length);
 
@@ -47,8 +47,10 @@ namespace TextAnalyzerWebClient
                     while (stream.DataAvailable);
 
                     message = builder.ToString();
-                    Console.WriteLine("Сервер: {0}", message);
-                    Thread.Sleep(1000);
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine(message);
+                    Console.ResetColor();
+                    //Thread.Sleep(1000);
                 }
             }
             catch (Exception ex)

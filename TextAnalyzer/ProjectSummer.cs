@@ -14,14 +14,6 @@ namespace TextAnalyzer
     {
         private static Logger Logger_ = new Logger("ProjectSummer");
 
-        //public class ServerCommandArguments
-        //{
-        //    public bool Add { get; set; }
-        //    public bool Update { get; set; }
-        //    public bool Clear { get; set; }
-        //    public string FilePath { get; set; }
-        //}
-
         public class Logger
         {
             public Logger(string name)

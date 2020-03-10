@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Text;
 
 namespace TextAnalyzer
 {
@@ -11,21 +10,25 @@ namespace TextAnalyzer
         static void Main(string[] args)
         {
             Logger.Write($"Старт программы с параметрами: {string.Join("; ", args)}");
-            TextParser.Initialize("name=Test2");
+            TextParser.Initialize("name=Test1");
             if (args.Count() > 0)
             {
                 #region Модификация словаря
                 bool noError = false;
-                if (args.Count() == 2)
+                if (args.Length > 0)
                 {
                     switch (args[0])
                     {
                         case "-add":
-                            noError = TextParser.ParseTextToDB(args[1], false);
+                            noError = args.Length == 2 ? 
+                                TextParser.ParseTextToDB(args[1], false) : 
+                                false;
                             Logger.Write($"Результат add: {noError}");
                             break;
                         case "-update":
-                            noError = TextParser.ParseTextToDB(args[1], true);
+                            noError = args.Length == 2 ?
+                                TextParser.ParseTextToDB(args[1], true) :
+                                false;
                             Logger.Write($"Результат update: {noError}");
                             break;
                         case "-clear":

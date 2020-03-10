@@ -48,71 +48,53 @@ namespace TextAnalyzerWebServer
                     #endregion
 
                     TextParser.Initialize(connectionString);
+                    //для кеширования запроса
+                    TextParser.GetNearWords("a", false);
 
                     Thread clThread = new Thread(Listen);
                     clThread.Start(port);
 
                     #region Чтение команд с консоли
-                    var parCommandLine = new FluentCommandLineParser();
-
-                    bool add, update, clear;
-                    string filePath;
-                    parCommandLine.Setup<string>('a', "add")
-                     .Callback(val => { filePath = val; add = true; });
-
-                    parCommandLine.Setup<string>('u', "update")
-                     .Callback(val => { filePath = val; update = true; });
-
-                    parCommandLine.Setup<bool>('c', "clear")
-                     .SetDefault(false).
-                     .Callback(val => clear = val);
-
                     string command = "";
                     while (true)
                     {
-                        add = false; update = false; clear = false;
-                        filePath = "";
-                        command = Console.ReadLine();//ProjectSummer.ReadLineEsc(out command);
+                        command = Console.ReadLine();
                         Logger.Write($"Введена команда: {command}");
                         if (!string.IsNullOrEmpty(command))
                         {
-                            result = parCommandLine.Parse(command.Split(new[] { '\r', '\n', ' ' }, StringSplitOptions.RemoveEmptyEntries));
-                            if (result.HasErrors)
+                            var commands = command.Split(new[] { '\r', '\n', ' ', '\'', '"'}, StringSplitOptions.RemoveEmptyEntries);
+
+                            bool noError = false;
+                            if (commands.Length > 0)
+                            {
+                                switch (commands[0])
+                                {
+                                    case "-add":
+                                        noError = commands.Length == 2 ?
+                                            TextParser.ParseTextToDB(commands[1], false):
+                                            false;
+                                        Logger.Write($"Результат add: {noError}");
+                                        break;
+                                    case "-update":
+                                        noError = commands.Length == 2 ?
+                                            TextParser.ParseTextToDB(commands[1], true) :
+                                            false;
+                                        Logger.Write($"Результат update: {noError}");
+                                        break;
+                                    case "-clear":
+                                        noError = TextParser.ClearDB();
+                                        Logger.Write($"Результат clear: {noError}");
+                                        break;
+                                }
+                            }
+                            if (!noError)
                             {
                                 Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine("Неверные формат команды!");
+                                Console.WriteLine("Введена неверная команда!");
                                 Console.ResetColor();
-                                Logger.Write("Неверные формат команды!");
+                                Logger.Write("Введена неверная команда!");
                             }
-                            else
-                            {
-                                bool noError = false;
-                                if (clear)
-                                {
-                                    noError = TextParser.ClearDB();
-                                    Logger.Write($"Результат clear: {noError}");
-                                }
-                                if (add && !string.IsNullOrWhiteSpace(filePath))
-                                {
-                                    noError = TextParser.ParseTextToDB(filePath, false);
-                                    Logger.Write($"Результат add: {noError}");
-                                }
-                                if (update && !string.IsNullOrWhiteSpace(filePath))
-                                {
-                                    noError = TextParser.ParseTextToDB(filePath, true);
-                                    Logger.Write($"Результат update: {noError}");
-                                }
-                            }
-                            //var words = TextParser.GetNearWords(command);
-                            //if (words.Count > 0)
-                            //{
-                            //    Console.ForegroundColor = ConsoleColor.Green;
-                            //    Console.WriteLine(string.Join(Environment.NewLine, words));
-                            //    Console.ResetColor();
-                            //}
                         }
-                        //else
-                        //    break;
                     } 
                     #endregion
                 }
@@ -132,13 +114,13 @@ namespace TextAnalyzerWebServer
                 try
                 {
                     serverSocket.Start();
-                    Logger.Write("Server Started");
+                    Logger.Write("Начат прием соединений");
 
                     while (true)
                     {
                         counter += 1;
                         clientSocket = serverSocket.AcceptTcpClient();
-                        Logger.Write($"Client[{counter}] started!");
+                        Logger.Write($"Подключение клиента[{counter}]");
                         HandleClinet client = new HandleClinet();
                         client.Start(clientSocket, counter.ToString());
                     }
@@ -151,14 +133,12 @@ namespace TextAnalyzerWebServer
                 {
                     clientSocket.Close();
                     serverSocket.Stop();
-                    Console.WriteLine(" >> " + "exit");
-                    Console.ReadLine();
+                    Logger.Write("Остановка сервера");
+                    //Console.ReadLine();
                 }
             }
         }
 
-
-        //Class to handle each client request separatly
         public class HandleClinet
         {
             TcpClient ClientSocket;
@@ -185,15 +165,14 @@ namespace TextAnalyzerWebServer
                 byte[] bytesFrom = new byte[10025];
                 string dataFromClient = null;
                 Byte[] sendBytes = null;
-                string serverResponse = null;
-                string rCount = null;
-                requestCount = 0;
+                string serverResponse;
 
                 while (ClientSocket.Connected)
                 {
                     try
                     {
-                        requestCount = requestCount + 1;
+                        serverResponse = "";
+                        ++requestCount;
                         NetworkStream stream = ClientSocket.GetStream();
                         //stream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
                         // получаем ответ
@@ -210,19 +189,25 @@ namespace TextAnalyzerWebServer
                         dataFromClient = builder.ToString();
 
                         //dataFromClient = System.Text.Encoding.UTF8.GetString(bytesFrom);
-                        dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf($"${(char)0}"));
-                        Console.WriteLine(" >> " + "From client-" + Id + dataFromClient);
+                        //dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf($"${(char)0}"));
+                        Logger.Write($"Запрос клиента[{Id}]:{dataFromClient}");
 
-                        rCount = Convert.ToString(requestCount);
-                        serverResponse = "Server to clinet(" + Id + ") " + rCount;
+                        var commands = dataFromClient.Split(new[] { '\r', '\n', ' ', '\'', '"' }, StringSplitOptions.RemoveEmptyEntries);
+
+                        if (commands.Length == 2 && string.Compare(commands[0], "get") == 0)
+                        {
+                            serverResponse = string.Join(Environment.NewLine, TextParser.GetNearWords(commands[1].ToLower()));
+                        }
+
+                        //serverResponse = "Server to clinet(" + Id + ") ";
                         sendBytes = Encoding.UTF8.GetBytes(serverResponse);
                         stream.Write(sendBytes, 0, sendBytes.Length);
                         stream.Flush();
-                        Console.WriteLine(" >> " + serverResponse);
+                        Logger.Write($"Ответ сервера клиенту[{Id}]:{serverResponse}");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(" >> " + ex.ToString());
+                        Logger.Write($"Ошибка в HandleRequest:{ex.ToString()}");
                     }
                 }
             }
