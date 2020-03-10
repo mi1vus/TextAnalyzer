@@ -49,8 +49,9 @@ namespace TextAnalyzerWebClient
                     string message = Console.ReadLine();
                     byte[] data = Encoding.UTF8.GetBytes($"get {message}");
                     stream.Write(data, 0, data.Length);
+                    stream.Flush();
 
-                    byte[] bytesFrom = new byte[10025];
+                    byte[] bytesFrom = new byte[4194304];
                     StringBuilder builder = new StringBuilder();
                     int bytes = 0;
 int count = 0;            

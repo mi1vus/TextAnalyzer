@@ -15,9 +15,6 @@ namespace TextAnalyzerWebServer
         {
             static void Main(string[] args)
             {
-                //foreach (var i in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
-                //    foreach (var ua in i.GetIPProperties().UnicastAddresses)
-                //        Console.WriteLine(ua.Address);
                 Logger.Write($"Старт программы с параметрами: {string.Join("; ", args)}");
                 string connectionString = "";
                 int port = 0;
@@ -123,6 +120,7 @@ namespace TextAnalyzerWebServer
                         counter += 1;
                         clientSocket = serverSocket.AcceptTcpClient();
                         Logger.Write($"Подключение клиента[{counter}]");
+                        //  Класс представляющий новое подключение
                         HandleClinet client = new HandleClinet();
                         client.Start(clientSocket, counter.ToString());
                     }
@@ -164,7 +162,7 @@ namespace TextAnalyzerWebServer
             private void HandleRequest()
             {
                 int requestCount = 0;
-                byte[] bytesFrom = new byte[10025];
+                byte[] bytesFrom = new byte[16384];
                 string dataFromClient = null;
                 byte[] sendBytes = null;
                 string serverResponse;
@@ -186,7 +184,6 @@ namespace TextAnalyzerWebServer
 
                         dataFromClient = builder.ToString();
 
-                        //TODO прекратить при обрыве клиента
                         Logger.Write($"Запрос клиента[{Id}]:{dataFromClient}");
 
                         var commands = dataFromClient.Split(new[] { '\r', '\n', ' ', '\'', '"' }, StringSplitOptions.RemoveEmptyEntries);
