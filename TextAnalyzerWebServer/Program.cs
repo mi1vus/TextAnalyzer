@@ -48,8 +48,8 @@ namespace TextAnalyzerWebServer
                     //для кэширования запроса
                     TextParser.GetNearWords("a", false);
 
-                    Thread clThread = new Thread(Listen);
-                    clThread.Start(port);
+                    Thread clientThread = new Thread(Listen);
+                    clientThread.Start(port);
 
                     #region Чтение команд с консоли
                     string command = "";
@@ -189,9 +189,13 @@ namespace TextAnalyzerWebServer
                         var commands = dataFromClient.Split(new[] { '\r', '\n', ' ', '\'', '"' }, StringSplitOptions.RemoveEmptyEntries);
 
                         serverResponse = "";
+                        int responseSize = 0;
                         if (commands.Length == 2 && string.Compare(commands[0], "get") == 0)
-                            serverResponse = string.Join(Environment.NewLine, TextParser.GetNearWords(commands[1].ToLower(), true, 0));
-
+                        {
+                            var words = TextParser.GetNearWords(commands[1].ToLower(), true, 0);
+                            responseSize = words.Count;
+                            serverResponse = string.Join(Environment.NewLine, words);
+                        }
                         if (string.IsNullOrEmpty(serverResponse))
                             serverResponse = "-";
 
@@ -200,7 +204,7 @@ namespace TextAnalyzerWebServer
                         sendBytes = Encoding.UTF8.GetBytes(serverResponse);
                         stream.Write(sendBytes, 0, sendBytes.Length);
                         stream.Flush();
-                        Logger.Write($"Ответ сервера клиенту[{Id}]:\r\n{serverResponse}");
+                        Logger.Write($"Ответ сервера клиенту[{Id}]:{responseSize} слов");
                     }
                     catch (Exception ex)
                     {
