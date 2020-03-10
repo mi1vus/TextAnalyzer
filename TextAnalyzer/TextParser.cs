@@ -9,7 +9,8 @@ namespace TextAnalyzer
     public class TextParser
     {
         private static ProjectSummer.Logger Logger = new ProjectSummer.Logger("TextParser");
-        private static DBHelper.WordsContext DbСontext;
+        private static DBHelper.WordsContext ModifyDbСontext;
+        private static DBHelper.WordsContext QueryDbСontext;
 
         /// <summary>
         /// Инициализация
@@ -20,15 +21,16 @@ namespace TextAnalyzer
         {
             try
             {
-                DbСontext = new DBHelper.WordsContext(connectionString/*"Data Source=.\\SQLEXP; Initial Catalog=TextAnalyzer; Integrated Security=true; MultipleActiveResultSets=true;"*/);
+                ModifyDbСontext = new DBHelper.WordsContext(connectionString/*"Data Source=.\\SQLEXP; Initial Catalog=TextAnalyzer; Integrated Security=true; MultipleActiveResultSets=true;"*/);
+                QueryDbСontext = new DBHelper.WordsContext(connectionString/*"Data Source=.\\SQLEXP; Initial Catalog=TextAnalyzer; Integrated Security=true; MultipleActiveResultSets=true;"*/);
                 return true;
             }
             catch (Exception ex)
             {
-                Logger.Write($"Ошибка в Initialyze: {ex.ToString()}");
+                Logger.Write($"Ошибка в Initialize: {ex.ToString()}");
                 return false;
             }
-}
+        }
 
         /// <summary>
         /// Анализ текста и добавление слов в базу данных
@@ -43,7 +45,7 @@ namespace TextAnalyzer
                 Logger.Write($"Отсутствует файл для анализа {path}");
                 return false;
             }
-            if (DbСontext == null)
+            if (ModifyDbСontext == null)
             {
                 Logger.Write("TextParser не инициализирован!");
                 return false;
@@ -62,19 +64,20 @@ namespace TextAnalyzer
 
                 #region Анализ и подготовка базы данных
 
-                var dbWordsCount = DbСontext.Words.Count();
+                var dbWordsCount = ModifyDbСontext.Words.Count();
 
                 if (updateDB)
                 {
                     if (dbWordsCount > 0)
                     {
-                        wordsFromDb = DbСontext.Words.ToDictionary(k => k.Text, v => v.Count);
+                        wordsFromDb = ModifyDbСontext.Words.ToDictionary(k => k.Text, v => v.Count);
                     }
                 }
                 else
                 {
-                    DbСontext.Words.RemoveRange(DbСontext.Words);
-                    DbСontext.SaveChanges();
+                    ModifyDbСontext.Words.RemoveRange(ModifyDbСontext.Words);
+                    lock (QueryDbСontext)
+                        ModifyDbСontext.SaveChanges();
                 }
 
                 #endregion
@@ -87,7 +90,7 @@ namespace TextAnalyzer
                     while (!reader.EndOfStream)
                     {
                         var line = reader.ReadLine().ToLower().Split(
-                            new[] { " ", "-", ",", ".","\"",
+                            new[] { " ", "-", ",", ".","\"",":", ";",
                             "?","!","\'","(",")","(",")","[","]",
                             "0","1","2","3","4","5","6","7","8","9"}
                             , StringSplitOptions.RemoveEmptyEntries);
@@ -123,7 +126,7 @@ namespace TextAnalyzer
 
                 #region Добавление слов в БД
 
-                DbСontext.Words.AddRange(wordsToAdd.Where(w => w.Value > 2).Select(w => new DBHelper.Word
+                ModifyDbСontext.Words.AddRange(wordsToAdd.Where(w => w.Value > 2).Select(w => new DBHelper.Word
                 {
                     Text = w.Key,
                     Count = w.Value
@@ -137,14 +140,15 @@ namespace TextAnalyzer
 
                 foreach (var word in wordsToUpdate.Where(w => w.Value > 2))
                 {
-                    DbСontext.Words.First(w => w.Text == word.Key).Count = word.Value;
+                    ModifyDbСontext.Words.First(w => w.Text == word.Key).Count = word.Value;
                 }
 
                 #endregion
 
                 Logger.LogTimerAndRestart($"Обновление слов [{wordsToUpdate.Where(w => w.Value > 2).Count()}] в контексте заняло:");
 
-                DbСontext.SaveChanges();
+                lock (QueryDbСontext)
+                    ModifyDbСontext.SaveChanges();
 
                 Logger.LogTimerAndRestart($"Сохранение контекста заняло:");
                 Logger.ResetTimer();
@@ -168,7 +172,7 @@ namespace TextAnalyzer
         public static List<String> GetNearWords(string prefix, bool logTime = true, int top = 5)
         {
             List<String> result = new List<string>();
-            if (DbСontext == null)
+            if (QueryDbСontext == null)
             {
                 Logger.Write("TextParser не инициализирован!");
                 return result;
@@ -176,10 +180,16 @@ namespace TextAnalyzer
             try
             {
                 Logger.StartTimer();
-                result = DbСontext.Words.Where(w => w.Text.StartsWith(prefix))
-                    .OrderByDescending(w => w.Count)
-                    .ThenBy(w => w.Text)
-                    .Take(top).Select(w => w.Text).ToList();
+                IOrderedQueryable<DBHelper.Word> query = 
+                    QueryDbСontext.Words.Where(w => w.Text.StartsWith(prefix))
+                        .OrderByDescending(w => w.Count).ThenBy(w => w.Text);
+
+                if (top > 0)
+                    query = (IOrderedQueryable<DBHelper.Word>)query.Take(top);
+
+                lock (QueryDbСontext)
+                    result = query.Select(w => w.Text).ToList();
+
                 if (logTime)
                     Logger.LogTimerAndRestart($"Запрос автодополнения к \"{prefix}\". Найдено {result.Count} слов. Запрос занял:");
                 Logger.ResetTimer();
@@ -197,15 +207,16 @@ namespace TextAnalyzer
         /// <returns>False - если возникла ошибка</returns>
         public static bool ClearDB()
         {
-            if (DbСontext == null)
+            if (ModifyDbСontext == null)
             {
                 Logger.Write("TextParser не инициализирован!");
                 return false;
             }
             try
             {
-                DbСontext.Words.RemoveRange(DbСontext.Words);
-                DbСontext.SaveChanges();
+                ModifyDbСontext.Words.RemoveRange(ModifyDbСontext.Words);
+                lock (QueryDbСontext)
+                    ModifyDbСontext.SaveChanges();
                 return true;
             }
             catch (Exception ex)

@@ -1,48 +1,64 @@
-﻿  using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using Fclp;
+using TextAnalyzer;
 
 namespace TextAnalyzerWebClient
 {
     class Program
     {
-        const int port = 1234;
-        const string address = "localhost";
-        const string address2 = "127.0.0.1";
+        private static ProjectSummer.Logger Logger = new ProjectSummer.Logger("TextAnalyzerWebClient");
         static void Main(string[] args)
         {
-            //Console.Write("Введите свое имя:");
-            //string userName = Console.ReadLine();
             TcpClient client = null;
+            Logger.Write($"Старт программы с параметрами: {string.Join("; ", args)}");
+            string address = "";
+            int port = 0;
             try
             {
+                #region Чтение параметров приложения
+                var parConsole = new FluentCommandLineParser();
+
+                parConsole.Setup<string>('a', "address")
+                 .Callback(val => address = val)
+                 .Required();
+
+                parConsole.Setup<int>('p', "port")
+                .Callback(val => port = val)
+                .Required();
+
+                var result = parConsole.Parse(args);
+
+                if (result.HasErrors)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Неверные начальные параметры!");
+                    Console.ResetColor();
+                    Logger.Write("Неверные начальные параметры!");
+                    Console.ReadKey();
+                    return;
+                }
+                #endregion
+
                 client = new TcpClient(address, port);
                 NetworkStream stream = client.GetStream();
 
                 while (true)
                 {
-                    //Console.Write(userName + ": ");
-                    //// ввод сообщения
                     string message = Console.ReadLine();
-                    //message = String.Format("{0}: {1}$\0", userName, message);
-                    //var message = $"Макс: Привет неудачники!${(char)0}";
-                    // преобразуем сообщение в массив байтов
                     byte[] data = Encoding.UTF8.GetBytes($"get {message}");
-                    // отправка сообщения
                     stream.Write(data, 0, data.Length);
 
-                    // получаем ответ
-                    data = new byte[64]; // буфер для получаемых данных
+                    byte[] bytesFrom = new byte[10025];
                     StringBuilder builder = new StringBuilder();
                     int bytes = 0;
+int count = 0;            
                     do
                     {
-                        bytes = stream.Read(data, 0, data.Length);
-                        builder.Append(Encoding.UTF8.GetString(data, 0, bytes));
+                        bytes = stream.Read(bytesFrom, 0, bytesFrom.Length);
+                        builder.Append(Encoding.UTF8.GetString(bytesFrom, 0, bytes));
+++count;
                     }
                     while (stream.DataAvailable);
 
@@ -55,7 +71,11 @@ namespace TextAnalyzerWebClient
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Logger.Write(ex.Message);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Сбой в программе!");
+                Console.ResetColor();
+                Console.ReadKey();
             }
             finally
             {

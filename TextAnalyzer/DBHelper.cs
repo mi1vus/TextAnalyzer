@@ -27,11 +27,6 @@ namespace TextAnalyzer
             }
 
             public DbSet<Word> Words { get; set; }
-
-            //protected override void OnModelCreating(DbModelBuilder modelBuilder)
-            //{
-            //    modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
-            //}
         }
 
 

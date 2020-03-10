@@ -10,7 +10,7 @@ namespace TextAnalyzer
         static void Main(string[] args)
         {
             Logger.Write($"Старт программы с параметрами: {string.Join("; ", args)}");
-            TextParser.Initialize("name=Test1");
+            TextParser.Initialize("name=Test");
             if (args.Count() > 0)
             {
                 #region Модификация словаря
@@ -51,7 +51,7 @@ namespace TextAnalyzer
             else
             {
                 #region Запросы к словарю
-                //для кеширования запроса
+                //для кэширования запроса
                 TextParser.GetNearWords("a", false);
                 string prefix = "";
                 while (true)

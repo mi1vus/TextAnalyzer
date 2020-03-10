@@ -48,7 +48,7 @@ namespace TextAnalyzerWebServer
                     #endregion
 
                     TextParser.Initialize(connectionString);
-                    //для кеширования запроса
+                    //для кэширования запроса
                     TextParser.GetNearWords("a", false);
 
                     Thread clThread = new Thread(Listen);
@@ -62,22 +62,22 @@ namespace TextAnalyzerWebServer
                         Logger.Write($"Введена команда: {command}");
                         if (!string.IsNullOrEmpty(command))
                         {
-                            var commands = command.Split(new[] { '\r', '\n', ' ', '\'', '"'}, StringSplitOptions.RemoveEmptyEntries);
-
+                            var commands = command.Split(new[] { '\'', '"'}, StringSplitOptions.RemoveEmptyEntries);
+                            
                             bool noError = false;
                             if (commands.Length > 0)
                             {
-                                switch (commands[0])
+                                switch (commands[0].Trim())
                                 {
                                     case "-add":
                                         noError = commands.Length == 2 ?
-                                            TextParser.ParseTextToDB(commands[1], false):
+                                            TextParser.ParseTextToDB(commands[1].Trim(), false):
                                             false;
                                         Logger.Write($"Результат add: {noError}");
                                         break;
                                     case "-update":
                                         noError = commands.Length == 2 ?
-                                            TextParser.ParseTextToDB(commands[1], true) :
+                                            TextParser.ParseTextToDB(commands[1].Trim(), true) :
                                             false;
                                         Logger.Write($"Результат update: {noError}");
                                         break;
@@ -103,6 +103,7 @@ namespace TextAnalyzerWebServer
                     Logger.Write($"Ошибка в Main: {ex.ToString()}");
                 }
             }
+
             private static void Listen(object port)
             {
                 if (!(port is int))
@@ -136,7 +137,6 @@ namespace TextAnalyzerWebServer
                     serverSocket.Stop();
                     Logger.Write("Остановка сервера");
                     Console.WriteLine("Остановка сервера");
-                    //Console.ReadLine();
                 }
             }
         }
@@ -151,8 +151,8 @@ namespace TextAnalyzerWebServer
                 {
                     this.ClientSocket = inClientSocket;
                     this.Id = clineNo;
-                    Thread clThread = new Thread(HandleRequest);
-                    clThread.Start();
+                    Thread clientThread = new Thread(HandleRequest);
+                    clientThread.Start();
                     return true;
                 }
                 catch (Exception ex)
@@ -166,19 +166,15 @@ namespace TextAnalyzerWebServer
                 int requestCount = 0;
                 byte[] bytesFrom = new byte[10025];
                 string dataFromClient = null;
-                Byte[] sendBytes = null;
+                byte[] sendBytes = null;
                 string serverResponse;
 
                 while (ClientSocket.Connected)
                 {
                     try
                     {
-                        serverResponse = "";
                         ++requestCount;
                         NetworkStream stream = ClientSocket.GetStream();
-                        //stream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
-                        // получаем ответ
-                        //byte[] data = new byte[64]; // буфер для получаемых данных
                         StringBuilder builder = new StringBuilder();
                         int bytes = 0;
                         do
@@ -190,19 +186,20 @@ namespace TextAnalyzerWebServer
 
                         dataFromClient = builder.ToString();
 
-                        //dataFromClient = System.Text.Encoding.UTF8.GetString(bytesFrom);
-                        //dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf($"${(char)0}"));
                         //TODO прекратить при обрыве клиента
                         Logger.Write($"Запрос клиента[{Id}]:{dataFromClient}");
 
                         var commands = dataFromClient.Split(new[] { '\r', '\n', ' ', '\'', '"' }, StringSplitOptions.RemoveEmptyEntries);
 
+                        serverResponse = "";
                         if (commands.Length == 2 && string.Compare(commands[0], "get") == 0)
-                        {
-                            serverResponse = string.Join(Environment.NewLine, TextParser.GetNearWords(commands[1].ToLower()));
-                        }
+                            serverResponse = string.Join(Environment.NewLine, TextParser.GetNearWords(commands[1].ToLower(), true, 0));
 
-                        //serverResponse = "Server to clinet(" + Id + ") ";
+                        if (string.IsNullOrEmpty(serverResponse))
+                            serverResponse = "-";
+
+                        dataFromClient = "";
+
                         sendBytes = Encoding.UTF8.GetBytes(serverResponse);
                         stream.Write(sendBytes, 0, sendBytes.Length);
                         stream.Flush();
@@ -210,6 +207,7 @@ namespace TextAnalyzerWebServer
                     }
                     catch (Exception ex)
                     {
+                        Logger.Write($"Отсоединение клиента[{Id}]");
                         Logger.Write($"Ошибка в HandleRequest:{ex.ToString()}");
                     }
                 }

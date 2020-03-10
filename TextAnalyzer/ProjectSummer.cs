@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Linq;
-using System.Net.Sockets;
-using System.Net;
-using System.Threading;
 using System.Diagnostics;
 
 namespace TextAnalyzer
@@ -167,9 +163,9 @@ namespace TextAnalyzer
                     stopWatch.Stop();
                     TimeSpan ts = stopWatch.Elapsed;
 
-                    string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                    string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
                         ts.Hours, ts.Minutes, ts.Seconds,
-                        ts.Milliseconds / 10);
+                        ts.Milliseconds);
                     result = Write($"{msg} {elapsedTime}");
 
                     stopWatch.Reset();
@@ -213,6 +209,7 @@ namespace TextAnalyzer
                 var key = Console.ReadKey(true);
                 while (key.Key != ConsoleKey.Enter && key.Key != ConsoleKey.Escape)
                 {
+                    #region Нажат back
                     if (key.Key == ConsoleKey.Backspace && Console.CursorLeft > 0)
                     {
                         var cli = --Console.CursorLeft;
@@ -224,6 +221,8 @@ namespace TextAnalyzer
                         Console.CursorLeft = cli;
                         key = Console.ReadKey(true);
                     }
+                    #endregion
+                    #region Нажат del
                     else if (key.Key == ConsoleKey.Delete && Console.CursorLeft < buffer.Length)
                     {
                         var cli = Console.CursorLeft;
@@ -235,6 +234,8 @@ namespace TextAnalyzer
                         Console.CursorLeft = cli;
                         key = Console.ReadKey(true);
                     }
+                    #endregion
+                    #region Введен символ
                     else if (Char.IsLetterOrDigit(key.KeyChar) || Char.IsWhiteSpace(key.KeyChar))
                     {
                         var cli = Console.CursorLeft;
@@ -244,20 +245,27 @@ namespace TextAnalyzer
                         Console.CursorLeft = cli + 1;
                         key = Console.ReadKey(true);
                     }
+                    #endregion
+                    #region Нажата стрелка влево
                     else if (key.Key == ConsoleKey.LeftArrow && Console.CursorLeft > 0)
                     {
                         Console.CursorLeft--;
                         key = Console.ReadKey(true);
                     }
+                    #endregion
+                    #region Нажата стрелка вправо
                     else if (key.Key == ConsoleKey.RightArrow && Console.CursorLeft < buffer.Length)
                     {
                         Console.CursorLeft++;
                         key = Console.ReadKey(true);
                     }
+                    #endregion
+                    #region Ожидание следующего нажатия
                     else
                     {
                         key = Console.ReadKey(true);
-                    }
+                    } 
+                    #endregion
                 }
 
                 if (key.Key == ConsoleKey.Enter)
