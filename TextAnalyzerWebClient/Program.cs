@@ -14,7 +14,7 @@ namespace TextAnalyzerWebClient
         {
             Logger.Write($"Старт программы с параметрами: {string.Join("; ", args)}");
 
-            for (int j = 0; j < 10; ++j)
+            for (int j = 0; j < 30; ++j)
             {
                 Thread clThread = new Thread(NewClient);
                 clThread.Start(args);
@@ -59,12 +59,12 @@ namespace TextAnalyzerWebClient
                 client = new TcpClient(address, port);
                 NetworkStream stream = client.GetStream();
 
-                for (int i = 0; i < 3200; ++i)
+                for (int i = 0; i < 320; ++i)
                 {
                     char pref = ' ';
                     pref = (char)('а' + i % 32);
 
-                    //string message = Console.ReadLine();
+                    //string pref = Console.ReadLine();
                     string message = "";
                     byte[] data = Encoding.UTF8.GetBytes($"get {pref}");
                     stream.Write(data, 0, data.Length);
@@ -93,7 +93,12 @@ namespace TextAnalyzerWebClient
             {
                 Logger.Write(ex.Message);
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Сбой в программе!");
+                string description = "";
+                if (ex is SocketException)
+                {
+                    description = (ex as SocketException).SocketErrorCode.ToString();
+                }
+                Console.WriteLine($"Ошибка в программе!{description}");
                 Console.ResetColor();
                 Console.ReadKey();
             }
