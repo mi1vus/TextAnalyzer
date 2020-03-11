@@ -215,7 +215,7 @@ namespace TextAnalyzer
                         var cli = --Console.CursorLeft;
                         buffer.Remove(cli, 1);
                         Console.CursorLeft = 0;
-                        Console.Write(new String(Enumerable.Range(0, buffer.Length + 1).Select(o => ' ').ToArray()));
+                        Console.Write(new string(Enumerable.Range(0, buffer.Length + 1).Select(o => ' ').ToArray()));
                         Console.CursorLeft = 0;
                         Console.Write(buffer.ToString());
                         Console.CursorLeft = cli;
@@ -228,7 +228,7 @@ namespace TextAnalyzer
                         var cli = Console.CursorLeft;
                         buffer.Remove(cli, 1);
                         Console.CursorLeft = 0;
-                        Console.Write(new String(Enumerable.Range(0, buffer.Length + 1).Select(o => ' ').ToArray()));
+                        Console.Write(new string(Enumerable.Range(0, buffer.Length + 1).Select(o => ' ').ToArray()));
                         Console.CursorLeft = 0;
                         Console.Write(buffer.ToString());
                         Console.CursorLeft = cli;
@@ -236,7 +236,7 @@ namespace TextAnalyzer
                     }
                     #endregion
                     #region Введен символ
-                    else if (Char.IsLetterOrDigit(key.KeyChar) || Char.IsWhiteSpace(key.KeyChar))
+                    else if (char.IsLetterOrDigit(key.KeyChar) || char.IsWhiteSpace(key.KeyChar))
                     {
                         var cli = Console.CursorLeft;
                         buffer.Insert(cli, key.KeyChar);
@@ -260,7 +260,7 @@ namespace TextAnalyzer
                         key = Console.ReadKey(true);
                     }
                     #endregion
-                    #region Ожидание следующего нажатия
+                    #region Остальные случаи
                     else
                     {
                         key = Console.ReadKey(true);

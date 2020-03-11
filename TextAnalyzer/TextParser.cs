@@ -21,8 +21,8 @@ namespace TextAnalyzer
         {
             try
             {
-                ModifyDbСontext = new DBHelper.WordsContext(connectionString/*"Data Source=.\\SQLEXP; Initial Catalog=TextAnalyzer; Integrated Security=true; MultipleActiveResultSets=true;"*/);
-                QueryDbСontext = new DBHelper.WordsContext(connectionString/*"Data Source=.\\SQLEXP; Initial Catalog=TextAnalyzer; Integrated Security=true; MultipleActiveResultSets=true;"*/);
+                ModifyDbСontext = new DBHelper.WordsContext(connectionString);
+                QueryDbСontext = new DBHelper.WordsContext(connectionString);
                 return true;
             }
             catch (Exception ex)
@@ -45,14 +45,14 @@ namespace TextAnalyzer
                 Logger.Write($"Отсутствует файл для анализа {path}");
                 return false;
             }
-            if (ModifyDbСontext == null)
+            if (ModifyDbСontext == null || QueryDbСontext == null)
             {
                 Logger.Write("TextParser не инициализирован!");
                 return false;
             }
             try
             {
-                Logger.Write($"Начало анализа {path}{Environment.NewLine}" +
+                Logger.Write($"Начало анализа текста {path}{Environment.NewLine}" +
                     $"обновление существующего словаря - {updateDB}");
 
                 Dictionary<string, int> wordsFromDb = new Dictionary<string, int>();

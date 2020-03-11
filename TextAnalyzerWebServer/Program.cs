@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using Fclp;
 using TextAnalyzer;
+
 
 namespace TextAnalyzerWebServer
 {
@@ -48,8 +50,8 @@ namespace TextAnalyzerWebServer
                     //для кэширования запроса
                     TextParser.GetNearWords("a", false);
 
-                    Thread clientThread = new Thread(Listen);
-                    clientThread.Start(port);
+                    Thread listenThread = new Thread(Listen);
+                    listenThread.Start(port);
 
                     #region Чтение команд с консоли
                     string command = "";
@@ -59,22 +61,23 @@ namespace TextAnalyzerWebServer
                         Logger.Write($"Введена команда: {command}");
                         if (!string.IsNullOrEmpty(command))
                         {
-                            var commands = command.Split(new[] { '\'', '"'}, StringSplitOptions.RemoveEmptyEntries);
+                            var commands = command.Split(new[] { '\'', '"'}, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(c=>c.Trim()).ToArray();
                             
                             bool noError = false;
                             if (commands.Length > 0)
                             {
-                                switch (commands[0].Trim())
+                                switch (commands[0])
                                 {
                                     case "-add":
                                         noError = commands.Length == 2 ?
-                                            TextParser.ParseTextToDB(commands[1].Trim(), false):
+                                            TextParser.ParseTextToDB(commands[1], false):
                                             false;
                                         Logger.Write($"Результат add: {noError}");
                                         break;
                                     case "-update":
                                         noError = commands.Length == 2 ?
-                                            TextParser.ParseTextToDB(commands[1].Trim(), true) :
+                                            TextParser.ParseTextToDB(commands[1], true) :
                                             false;
                                         Logger.Write($"Результат update: {noError}");
                                         break;
@@ -87,9 +90,9 @@ namespace TextAnalyzerWebServer
                             if (!noError)
                             {
                                 Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine("Введена неверная команда!");
+                                Console.WriteLine("Ошибка выполнения команды!");
                                 Console.ResetColor();
-                                Logger.Write("Введена неверная команда!");
+                                Logger.Write("Ошибка выполнения команды!");
                             }
                         }
                     } 
@@ -108,7 +111,7 @@ namespace TextAnalyzerWebServer
 
                 TcpListener serverSocket = new TcpListener(System.Net.IPAddress.Any, (int)port);
                 TcpClient clientSocket = default(TcpClient);
-                int counter = 0;
+                int clientCounter = 0;
                 try
                 {
                     serverSocket.Start();
@@ -117,12 +120,12 @@ namespace TextAnalyzerWebServer
 
                     while (true)
                     {
-                        counter += 1;
+                        clientCounter += 1;
                         clientSocket = serverSocket.AcceptTcpClient();
-                        Logger.Write($"Подключение клиента[{counter}]");
+                        Logger.Write($"Подключение клиента[{clientCounter}]");
                         //  Класс представляющий новое подключение
-                        HandleClinet client = new HandleClinet();
-                        client.Start(clientSocket, counter.ToString());
+                        Clinet client = new Clinet(clientSocket, clientCounter.ToString());
+                        client.Start();
                     }
                 }
                 catch (Exception ex)
@@ -139,16 +142,19 @@ namespace TextAnalyzerWebServer
             }
         }
 
-        public class HandleClinet
+        public class Clinet
         {
+            public Clinet(TcpClient inClientSocket, string clineNo)
+            {
+                ClientSocket = inClientSocket;
+                Id = clineNo;
+            }
             TcpClient ClientSocket;
-            string Id;
-            public bool Start(TcpClient inClientSocket, string clineNo)
+            readonly string Id;
+            public bool Start()
             {
                 try
                 {
-                    this.ClientSocket = inClientSocket;
-                    this.Id = clineNo;
                     Thread clientThread = new Thread(HandleRequest);
                     clientThread.Start();
                     return true;
@@ -184,7 +190,7 @@ namespace TextAnalyzerWebServer
 
                         dataFromClient = builder.ToString();
 
-                        Logger.Write($"Запрос клиента[{Id}]:{dataFromClient}");
+                        Logger.Write($"{requestCount} запрос клиента[{Id}]:{dataFromClient}");
 
                         var commands = dataFromClient.Split(new[] { '\r', '\n', ' ', '\'', '"' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -192,7 +198,7 @@ namespace TextAnalyzerWebServer
                         int responseSize = 0;
                         if (commands.Length == 2 && string.Compare(commands[0], "get") == 0)
                         {
-                            var words = TextParser.GetNearWords(commands[1].ToLower(), true, 0);
+                            var words = TextParser.GetNearWords(commands[1].ToLower(), true, 5);
                             responseSize = words.Count;
                             serverResponse = string.Join(Environment.NewLine, words);
                         }
